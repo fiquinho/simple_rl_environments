@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Tuple, TypeVar
 from typing_extensions import Protocol
+
 import numpy as np
 
 
@@ -59,6 +60,9 @@ class Bandits(ABC):
         self.step_num += 1
         done = self.step_num >= self.config.max_steps
         return [], reward, done
+
+
+BanditsType = TypeVar("BanditsType", bound=Bandits)
 
 
 class FixedValueBandits(Bandits):

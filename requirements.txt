@@ -1,0 +1,3 @@
+numpy~=1.18.1
+dataclasses~=0.8
+pygame~=1.9.6
