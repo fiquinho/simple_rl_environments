@@ -57,7 +57,7 @@ class RewardText(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(bandit_num * BANDITS_WIDTH + 1, BANDITS_WIDTH))
 
     def update_reward(self, value: float) -> None:
-        self.reward = str(round(value, 3))
+        self.reward = str(round(value, 2))
 
     def clear_reward(self) -> None:
         self.reward = ""
