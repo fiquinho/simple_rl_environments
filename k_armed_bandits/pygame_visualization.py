@@ -6,6 +6,8 @@ import pygame
 from k_armed_bandits.bandits import FixedValueBandits, FixedBanditsConfig, BanditsType, GaussianValueBandits, \
     GaussianBanditsConfig
 
+
+# Layout constants
 WINDOW_HEIGHT = 200
 BANDITS_WIDTH = 80
 BANDITS_HEIGHT = 120
@@ -19,10 +21,11 @@ UI_TEXT_COLOR = (0, 0, 0)
 
 
 pygame.font.init()
-my_font = pygame.font.SysFont('Comic Sans MS', 25)
+font = pygame.font.SysFont('Comic Sans MS', 25)
 
 
 class Button(pygame.sprite.Sprite):
+    """Sprite to represent a single bandit action"""
 
     def __init__(self, groups: pygame.sprite.AbstractGroup, bandit_num: int):
         super().__init__(groups)
@@ -32,12 +35,14 @@ class Button(pygame.sprite.Sprite):
                                                 BANDITS_WIDTH // 2))
 
     def handle_click(self) -> int:
+        """Returns the bandit id"""
         return self.bandit_num
 
     def update(self):
+        """Update sprite"""
         pygame.draw.circle(self.image, BUTTON_COLOR, (self.rect.width // 2, self.rect.width // 2), BUTTON_RADIUS)
 
-        text_surface = my_font.render(f"{self.bandit_num}", True, BUTTON_TEXT_COLOR)
+        text_surface = font.render(f"{self.bandit_num}", True, BUTTON_TEXT_COLOR)
         text_surface_rect = text_surface.get_rect()
 
         text_surface_x = (self.image.get_width() - text_surface_rect[2]) // 2
@@ -47,6 +52,7 @@ class Button(pygame.sprite.Sprite):
 
 
 class RewardText(pygame.sprite.Sprite):
+    """Sprite to show the reward from a bandit"""
 
     def __init__(self, groups: pygame.sprite.AbstractGroup, bandit_num: int):
         super().__init__(groups)
@@ -57,15 +63,17 @@ class RewardText(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(bandit_num * BANDITS_WIDTH + 1, BANDITS_WIDTH))
 
     def update_reward(self, value: float) -> None:
+        """Change stored reward value"""
         self.reward = str(round(value, 2))
 
     def clear_reward(self) -> None:
+        """Clean stored reward value"""
         self.reward = ""
 
     def update(self):
-        
+        """Update sprite"""
         self.image.fill(BANDIT_COLOR)
-        text_surface = my_font.render(self.reward, True, REWARD_TEXT_COLOR)
+        text_surface = font.render(self.reward, True, REWARD_TEXT_COLOR)
         text_surface_rect = text_surface.get_rect()
         text_surface_x = (self.image.get_width() - text_surface_rect[2]) // 2
         text_surface_y = (self.image.get_height() - text_surface_rect[3]) // 2
@@ -74,6 +82,7 @@ class RewardText(pygame.sprite.Sprite):
 
 
 class UI(pygame.sprite.Sprite):
+    """Sprite that shows the accumulated score and the step number"""
 
     def __init__(self, groups: pygame.sprite.AbstractGroup, num_bandits: int):
         super().__init__(groups)
@@ -90,16 +99,18 @@ class UI(pygame.sprite.Sprite):
         self.step = step_value
     
     def update(self):
+        """Update sprite"""
+
         self.image.fill(BACKGROUND_COLOR)
 
-        score_text_surface = my_font.render(f"Score: {self.score}", True, UI_TEXT_COLOR)
+        score_text_surface = font.render(f"Score: {self.score}", True, UI_TEXT_COLOR)
         score_text_surface_rect = score_text_surface.get_rect()
         score_text_surface_x = 30
         score_text_surface_y = (self.image.get_height() - score_text_surface_rect[3]) // 2
 
         self.image.blit(score_text_surface, dest=(score_text_surface_x, score_text_surface_y))
 
-        step_text_surface = my_font.render(f"Step: {self.step}", True, UI_TEXT_COLOR)
+        step_text_surface = font.render(f"Step: {self.step}", True, UI_TEXT_COLOR)
         step_text_surface_rect = step_text_surface.get_rect()
         step_text_surface_x = 240
         step_text_surface_y = (self.image.get_height() - step_text_surface_rect[3]) // 2
@@ -120,17 +131,20 @@ class GameEngine:
 
         # Sprites groups setup
         self.all_sprites = pygame.sprite.Group()
+
+        # Generate game
         self.buttons = [Button(self.all_sprites, i) for i in range(self.bandits_env.num_bandits)]
         self.texts = [RewardText(self.all_sprites, i) for i in range(self.bandits_env.num_bandits)]
         self.ui = UI(self.all_sprites, self.bandits_env.num_bandits)
 
     def _set_background(self):
+        """Draw background"""
         self.bg.fill(BACKGROUND_COLOR)
         for i in range(self.bandits_env.num_bandits):
             pygame.draw.rect(self.bg, BANDIT_COLOR, (i * BANDITS_WIDTH + 1, 1, BANDITS_WIDTH - 2, BANDITS_HEIGHT - 2))
     
     def _handle_click(self, click_pos: Tuple[int, int]):
-
+        """Update game state after a click on a bandit"""
         clicked_bandit = [b.bandit_num for b in self.buttons if b.rect.collidepoint(click_pos)]
         if len(clicked_bandit) > 0:
             clicked_bandit = clicked_bandit[0]
@@ -150,6 +164,7 @@ class GameEngine:
             print(clicked_bandit)
 
     def run(self):
+        """Runs a bandits game"""
 
         while True:
 
