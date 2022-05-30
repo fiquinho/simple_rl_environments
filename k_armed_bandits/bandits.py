@@ -1,15 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Tuple, TypeVar
-from typing_extensions import Protocol
+from typing import List, Tuple, TypeVar, Optional
 
 import numpy as np
-
-
-class ConfigProtocol(Protocol):
-    """Protocol for all bandits configurations"""
-    num_bandits: int
-    max_steps: int
 
 
 @dataclass
@@ -17,16 +10,21 @@ class BanditsConfig:
     """Base configuration for all bandit environments"""
     num_bandits: int = 10               # Number of possible actions
     max_steps: int = 1000               # The length of an episode
+    seed: Optional[int] = None          # Set random state
+
+
+BaseConfigType = TypeVar("BaseConfigType", bound=BanditsConfig)
 
 
 @dataclass
 class FixedBanditsConfig(BanditsConfig):
-    reward_value: int = 10              # The yielded reward from a bandit
+    hit_reward_value: int = 10          # The winning reward for all bandits
+    miss_reward_value: int = -1         # The losing reward for all bandits
 
 
 @dataclass
 class GaussianBanditsConfig(BanditsConfig):
-    global_reward_mean: float = 0.      # The mean reward fro all bandits
+    global_reward_mean: float = 0.      # The mean reward for all bandits
     global_reward_sigma: float = 1.     # The deviations of the mean reward for all bandits
     reward_sigma: float = 1.            # The deviations of the reward on each action
 
@@ -34,15 +32,16 @@ class GaussianBanditsConfig(BanditsConfig):
 class Bandits(ABC):
     """Base class for all bandit environments"""
 
-    def __init__(self, config: ConfigProtocol):
+    def __init__(self, config: BaseConfigType):
         self.config = config
         self.step_num = 0
+        self.rng = np.random.default_rng(self.config.seed)
 
     @property
-    def num_bandits(self):
+    def num_bandits(self) -> int:
         return self.config.num_bandits
 
-    def reset(self):
+    def reset(self) -> None:
         # Reset the environment to start a new episode
         self.step_num = 0
 
@@ -74,15 +73,15 @@ class FixedValueBandits(Bandits):
 
     def __init__(self, config: FixedBanditsConfig):
         super().__init__(config)
-        self.probabilities = np.random.uniform(0.001, 1, self.num_bandits)
+        self.probabilities = self.rng.uniform(0.001, 1, self.num_bandits)
 
     def get_reward(self, action: int) -> float:
         """Get reward from bandit #{action}"""
-        action_roll = np.random.uniform(0.001, 1)
+        action_roll = self.rng.uniform(0.001, 1)
         if action_roll >= self.probabilities[action]:
-            return self.config.reward_value
+            return self.config.hit_reward_value
         else:
-            return 0.
+            return self.config.miss_reward_value
 
 
 class GaussianValueBandits(Bandits):
@@ -96,14 +95,14 @@ class GaussianValueBandits(Bandits):
 
     def __init__(self, config: GaussianBanditsConfig):
         super().__init__(config)
-        self.rewards = np.random.normal(loc=self.config.global_reward_mean,
-                                        scale=self.config.global_reward_sigma,
-                                        size=self.num_bandits)
+        self.rewards = self.rng.normal(loc=self.config.global_reward_mean,
+                                       scale=self.config.global_reward_sigma,
+                                       size=self.num_bandits)
 
     def get_reward(self, action: int) -> float:
         """Get reward from bandit #{action}"""
-        reward = np.random.normal(loc=self.rewards[action],
-                                  scale=self.config.reward_sigma)
+        reward = self.rng.normal(loc=self.rewards[action],
+                                 scale=self.config.reward_sigma)
         return reward
 
 

@@ -194,11 +194,11 @@ def main():
     bandits_type = "gaussian_values"
 
     if bandits_type == "fixed_values":
-        f_bandits = FixedValueBandits(FixedBanditsConfig(max_steps=20))
+        f_bandits = FixedValueBandits(FixedBanditsConfig(max_steps=20, seed=0))
         ge = GameEngine(f_bandits)
         ge.run()
     elif bandits_type == "gaussian_values":
-        g_bandits = GaussianValueBandits(GaussianBanditsConfig(max_steps=20))
+        g_bandits = GaussianValueBandits(GaussianBanditsConfig(max_steps=20, seed=0))
         ge = GameEngine(g_bandits)
         ge.run()
     else:
