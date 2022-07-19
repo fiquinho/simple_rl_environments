@@ -16,19 +16,6 @@ class BanditsConfig:
 BaseConfigType = TypeVar("BaseConfigType", bound=BanditsConfig)
 
 
-@dataclass
-class FixedBanditsConfig(BanditsConfig):
-    hit_reward_value: int = 10          # The winning reward for all bandits
-    miss_reward_value: int = -1         # The losing reward for all bandits
-
-
-@dataclass
-class GaussianBanditsConfig(BanditsConfig):
-    global_reward_mean: float = 0.      # The mean reward for all bandits
-    global_reward_sigma: float = 1.     # The deviations of the mean reward for all bandits
-    reward_sigma: float = 1.            # The deviations of the reward on each action
-
-
 class Bandits(ABC):
     """Base class for all bandit environments"""
 
@@ -48,7 +35,7 @@ class Bandits(ABC):
     @abstractmethod
     def get_reward(self, action: int) -> float:
         """Get reward from bandit #{action}"""
-    
+
     def step(self, action: int) -> Tuple[List[float], float, bool]:
         """Take a single action in the environment
 
@@ -64,10 +51,16 @@ class Bandits(ABC):
 BanditsType = TypeVar("BanditsType", bound=Bandits)
 
 
+@dataclass
+class FixedBanditsConfig(BanditsConfig):
+    hit_reward_value: int = 10          # The winning reward for all bandits
+    miss_reward_value: int = -1         # The losing reward for all bandits
+
+
 class FixedValueBandits(Bandits):
     """Bandit environment where each bandit has a fixed probability of
-    yielding a reward at any time step. The reward returned is fixed and
-    the same for all bandits."""
+    yielding a winning or losing reward at any time step.
+    The rewards returned are fixed and the same for all bandits."""
 
     config: FixedBanditsConfig
 
@@ -82,6 +75,13 @@ class FixedValueBandits(Bandits):
             return self.config.hit_reward_value
         else:
             return self.config.miss_reward_value
+
+
+@dataclass
+class GaussianBanditsConfig(BanditsConfig):
+    global_reward_mean: float = 0.      # The mean reward for all bandits
+    global_reward_sigma: float = 1.     # The deviations of the mean reward for all bandits
+    reward_sigma: float = 1.            # The deviations of the reward on each action
 
 
 class GaussianValueBandits(Bandits):
