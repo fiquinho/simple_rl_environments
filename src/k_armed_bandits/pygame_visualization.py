@@ -3,9 +3,9 @@ from typing import Tuple
 
 import pygame
 
-from k_armed_bandits.bandits import FixedValueBandits, FixedBanditsConfig, BanditsType, GaussianValueBandits, \
+from src.k_armed_bandits.bandits import FixedValueBandits, FixedBanditsConfig, BanditsType, GaussianValueBandits, \
     GaussianBanditsConfig
-
+from src.utils.randomizer import DefaultUniformRandomizer, DefaultNormalRandomizer
 
 # Layout constants
 WINDOW_HEIGHT = 200
@@ -194,11 +194,13 @@ def main():
     bandits_type = "gaussian_values"
 
     if bandits_type == "fixed_values":
-        f_bandits = FixedValueBandits(FixedBanditsConfig(max_steps=20, seed=0))
+        f_bandits = FixedValueBandits(FixedBanditsConfig(max_steps=20, seed=0),
+                                      DefaultUniformRandomizer())
         ge = GameEngine(f_bandits)
         ge.run()
     elif bandits_type == "gaussian_values":
-        g_bandits = GaussianValueBandits(GaussianBanditsConfig(max_steps=20, seed=0))
+        g_bandits = GaussianValueBandits(GaussianBanditsConfig(max_steps=20, seed=0),
+                                         DefaultNormalRandomizer())
         ge = GameEngine(g_bandits)
         ge.run()
     else:

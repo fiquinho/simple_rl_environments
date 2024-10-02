@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Tuple, TypeVar, Optional
 
-import numpy as np
+from src.utils.randomizer import RandomizerI, UniformRandomizerI, NormalRandomizerI, DefaultUniformRandomizer, \
+    DefaultNormalRandomizer
 
 
 @dataclass
@@ -19,10 +20,10 @@ BaseConfigType = TypeVar("BaseConfigType", bound=BanditsConfig)
 class Bandits(ABC):
     """Base class for all bandit environments"""
 
-    def __init__(self, config: BaseConfigType):
-        self.config = config
-        self.step_num = 0
-        self.rng = np.random.default_rng(self.config.seed)
+    def __init__(self, config: BaseConfigType, randomizer: RandomizerI):
+        self.config: BaseConfigType = config
+        self.step_num: int = 0
+        self.rng = randomizer(self.config.seed)
 
     @property
     def num_bandits(self) -> int:
@@ -63,10 +64,11 @@ class FixedValueBandits(Bandits):
     The rewards returned are fixed and the same for all bandits."""
 
     config: FixedBanditsConfig
+    rng: UniformRandomizerI
 
-    def __init__(self, config: FixedBanditsConfig):
-        super().__init__(config)
-        self.probabilities = self.rng.uniform(0.001, 1, self.num_bandits)
+    def __init__(self, config: FixedBanditsConfig, randomizer: UniformRandomizerI):
+        super().__init__(config, randomizer)
+        self.probabilities = self.rng.uniform(0.001, 1.0, self.num_bandits)
 
     def get_reward(self, action: int) -> float:
         """Get reward from bandit #{action}"""
@@ -92,9 +94,10 @@ class GaussianValueBandits(Bandits):
     distribution, with mu equal to the bandits fixed mean reward."""
 
     config: GaussianBanditsConfig
+    rng: NormalRandomizerI
 
-    def __init__(self, config: GaussianBanditsConfig):
-        super().__init__(config)
+    def __init__(self, config: GaussianBanditsConfig, randomizer: NormalRandomizerI):
+        super().__init__(config, randomizer)
         self.rewards = self.rng.normal(loc=self.config.global_reward_mean,
                                        scale=self.config.global_reward_sigma,
                                        size=self.num_bandits)
@@ -108,7 +111,8 @@ class GaussianValueBandits(Bandits):
 
 def main():
     print("Fixed bandits")
-    f_bandits = FixedValueBandits(FixedBanditsConfig(max_steps=20))
+    f_bandits = FixedValueBandits(FixedBanditsConfig(max_steps=20),
+                                  DefaultUniformRandomizer())
     
     done = False
     while not done:
@@ -117,7 +121,8 @@ def main():
             print(reward)
 
     print("Gaussian bandits")
-    g_bandits = GaussianValueBandits(GaussianBanditsConfig(max_steps=20))
+    g_bandits = GaussianValueBandits(GaussianBanditsConfig(max_steps=20),
+                                     DefaultNormalRandomizer())
 
     done = False
     while not done:
